@@ -1,14 +1,22 @@
 <html>
 <head>
 <style>
+input {
+  vertical-align: top;
+  height: 12px;
+}
 input[type=range]:after {
   content: attr(value);
-  padding-right: 4px;
+  display: inline-block;
+  padding-top: 4px;
+}
+body {
+  font-family: sans-serif;
 }
 </style>
 </head>
 <body>
-<div style="display:inline-block;">
+<div style="display:inline-block; vertical-align:top;">
   <h3>Performance fiddles</h3>
   <p>Worker count <input id="workercount" type="range" value="4" min="1" max="16" step="1">
   <p>Times to run benchmark <input id="times" type="range" value="100" min="1" max="500" step="1">
@@ -16,7 +24,7 @@ input[type=range]:after {
   <p>Use SSE-like version <input id="sse" type="checkbox">
   <p>Single-threaded <input id="singlethreaded" type="checkbox">
 </div>
-<div style="display:inline-block;">
+<div style="display:inline-block; vertical-align:top;">
   <h3>Visual fiddles</h3>
   <p>xFac <input type="range" value="20" min="5" max="320" step="5" onchange="Bones.xFac=1/this.value">
   <p>yFac <input type="range" value="80" min="5" max="320" step="5" onchange="Bones.yFac=1/this.value">
@@ -43,7 +51,7 @@ void main() {
 precision mediump float;
 varying float z;
 void main() {
-  gl_FragColor = vec4(z,1.0,0.2+0.6*z,1.0);  // green
+  gl_FragColor = vec4(0.4+z*0.6,z*z*0.9,0.3-0.3*z*z,1);
 }
 </script>
 
