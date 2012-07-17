@@ -8,11 +8,21 @@ input[type=range]:after {
 </style>
 </head>
 <body>
-<p>Worker count <input id="workercount" type="range" value="4" min="1" max="16" step="1">
-<p>Times to run benchmark <input id="times" type="range" value="100" min="1" max="500" step="1">
-<p>Mesh size in Mverts <input id="mverts" type="range" value="0.125" min="0.125" max="4" step="0.125">
-<p>Use SSE-like version <input id="sse" type="checkbox">
-<p>Single-threaded <input id="singlethreaded" type="checkbox">
+<div style="display:inline-block;">
+  <h3>Performance fiddles</h3>
+  <p>Worker count <input id="workercount" type="range" value="4" min="1" max="16" step="1">
+  <p>Times to run benchmark <input id="times" type="range" value="100" min="1" max="500" step="1">
+  <p>Mesh size in Mverts <input id="mverts" type="range" value="0.125" min="0.125" max="4" step="0.125">
+  <p>Use SSE-like version <input id="sse" type="checkbox">
+  <p>Single-threaded <input id="singlethreaded" type="checkbox">
+</div>
+<div style="display:inline-block;">
+  <h3>Visual fiddles</h3>
+  <p>xFac <input type="range" value="20" min="5" max="320" step="5" onchange="Bones.xFac=1/this.value">
+  <p>yFac <input type="range" value="80" min="5" max="320" step="5" onchange="Bones.yFac=1/this.value">
+  <p>xtFac <input type="range" value="2" min="0" max="8" step="0.5" onchange="Bones.xtFac=this.value-0">
+  <p>ytFac <input type="range" value="4" min="0" max="8" step="0.5" onchange="Bones.ytFac=this.value-0">
+</div>
 <p><button id="b" disabled="disabled">Run Benchmark</button>
 <p id="r">Initializing...</p>
 <script src="bones.js"></script>
@@ -33,16 +43,16 @@ void main() {
 precision mediump float;
 varying float z;
 void main() {
-  gl_FragColor = vec4(0.0,1.0,z,1.0);  // green
+  gl_FragColor = vec4(z,1.0,0.2+0.6*z,1.0);  // green
 }
 </script>
 
 <script>
 var rs = document.querySelectorAll("input[type=range]");
 for (var i=0; i<rs.length; i++) {
-  rs[i].onchange = function(){
+  rs[i].addEventListener('change', function(){
     this.setAttribute("value", this.value);
-  }
+  }, false);
 }
 
 var prev_mverts = 0;
@@ -91,7 +101,7 @@ b.onclick = function() {
   var prev_t = performance.webkitNow();
   var bm = function(t) {
     var now_t = performance.webkitNow();
-    console.log(now_t - prev_t);
+//     console.log(now_t - prev_t);
     prev_t = now_t;
     var off = 0;
     Bones.dstVertices.forEach(function(ab) {

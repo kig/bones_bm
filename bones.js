@@ -202,6 +202,12 @@ Bones.workerCount = 4;
 Bones.useSSE = false;
 Bones.singleThreaded = false;
 
+
+Bones.xFac = 1/80;
+Bones.yFac = 1/20;
+Bones.xtFac = 2;
+Bones.ytFac = 4;
+
 Bones.initBenchmark = function(count) {
   var t_1 = performance.webkitNow();
   var boneCount = 200;
@@ -210,12 +216,6 @@ Bones.initBenchmark = function(count) {
   var weights = [];
   var i;
   var bbones = new Float32Array(16*boneCount);
-  for (i=0; i<bbones.length; i+=16) {
-    bbones[i] = 1; bbones[i+1] = 0; bbones[i+2] = 0; bbones[i+3] = 0;
-    bbones[i+4] = 1; bbones[i+5] = 1; bbones[i+6] = 0; bbones[i+7] = 0;
-    bbones[i+8] = 1; bbones[i+9] = 0; bbones[i+10] = 1; bbones[i+11] = 0;
-    bbones[i+12] = 0.5-Math.random(); bbones[i+13] = 0.5-Math.random(); bbones[i+14] = Math.random(); bbones[i+15] = 1;
-  }
   var bones = [];
   var workers = [];
   var workerCount = this.workerCount;
@@ -236,9 +236,10 @@ Bones.initBenchmark = function(count) {
     Bones.dstVertices = null;
     var bbones = new Float32Array(bones[0]);
     var t = Date.now()/1000;
+    var xFac = Bones.xFac, yFac = Bones.yFac, xtFac = Bones.xtFac, ytFac = Bones.ytFac;
     for (var i=0; i<bbones.length; i+=16) {
-      var sx = Math.sin(t+i/160)*(0.9+0.1*Math.sin(i));
-      var sy = Math.cos(t+i/160)*(0.9+0.1*Math.sin(i));
+      var sx = Math.sin(t+i/160)*(0.6+0.4*Math.sin(t+i*xFac+t*xtFac));
+      var sy = Math.cos(t+i/160)*(0.6+0.4*Math.sin(t+i*yFac+t*ytFac));
       bbones[i] = 1; bbones[i+1] = 0; bbones[i+2] = 0; bbones[i+3] = 0;
       bbones[i+4] = 0; bbones[i+5] = 1; bbones[i+6] = 0; bbones[i+7] = 0;
       bbones[i+8] = 0; bbones[i+9] = 0; bbones[i+10] = 1; bbones[i+11] = 0;
