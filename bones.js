@@ -1,3 +1,102 @@
+
+Vec4 = function() {
+  this.f32a = new Float32Array(4);
+};
+
+Vec4.prototype.load = function(v, off) {
+  this.f32a[0] = v[off+0];
+  this.f32a[1] = v[off+1];
+  this.f32a[2] = v[off+2];
+  this.f32a[3] = v[off+3];
+  return this;
+};
+
+Vec4.prototype.store = function(v, off) {
+  v[off+0] = this.f32a[0];
+  v[off+1] = this.f32a[1];
+  v[off+2] = this.f32a[2];
+  v[off+3] = this.f32a[3];
+  return this;
+};
+
+Vec4.prototype.set = function(v) {
+  this.f32a.set(v.f32a);
+  return this;
+};
+
+Vec4.prototype.setF = function(v) {
+  this.f32a[0] = v;
+  this.f32a[1] = v;
+  this.f32a[2] = v;
+  this.f32a[3] = v;
+  return this;
+};
+
+Vec4.prototype.addF = function(v) {
+  this.f32a[0] += v;
+  this.f32a[1] += v;
+  this.f32a[2] += v;
+  this.f32a[3] += v;
+  return this;
+};
+
+Vec4.prototype.subF = function(v) {
+  this.f32a[0] -= v;
+  this.f32a[1] -= v;
+  this.f32a[2] -= v;
+  this.f32a[3] -= v;
+  return this;
+};
+
+Vec4.prototype.mulF = function(v) {
+  this.f32a[0] *= v;
+  this.f32a[1] *= v;
+  this.f32a[2] *= v;
+  this.f32a[3] *= v;
+  return this;
+};
+
+Vec4.prototype.divF = function(v) {
+  this.f32a[0] /= v;
+  this.f32a[1] /= v;
+  this.f32a[2] /= v;
+  this.f32a[3] /= v;
+  return this;
+};
+
+Vec4.prototype.add = function(v) {
+  this.f32a[0] += v.f32a[0];
+  this.f32a[1] += v.f32a[1];
+  this.f32a[2] += v.f32a[2];
+  this.f32a[3] += v.f32a[3];
+  return this;
+};
+
+Vec4.prototype.sub = function(v) {
+  this.f32a[0] -= v.f32a[0];
+  this.f32a[1] -= v.f32a[1];
+  this.f32a[2] -= v.f32a[2];
+  this.f32a[3] -= v.f32a[3];
+  return this;
+};
+
+Vec4.prototype.mul = function(v) {
+  this.f32a[0] *= v.f32a[0];
+  this.f32a[1] *= v.f32a[1];
+  this.f32a[2] *= v.f32a[2];
+  this.f32a[3] *= v.f32a[3];
+  return this;
+};
+
+Vec4.prototype.div = function(v) {
+  this.f32a[0] /= v.f32a[0];
+  this.f32a[1] /= v.f32a[1];
+  this.f32a[2] /= v.f32a[2];
+  this.f32a[3] /= v.f32a[3];
+  return this;
+};
+
+
 Bones = {};
 
 Bones.applyBones_inlined = function(dstVertices, srcVertices, weights, bones) {
@@ -30,103 +129,6 @@ Bones.applyBones_inlined = function(dstVertices, srcVertices, weights, bones) {
   }
 };
 
-Vec4 = function() {
-  this.f32a = new Float32Array(4);
-};
-
-Vec4.prototype.load = function(v, off) {
-  this.f32a[0] = v[off+0];
-  this.f32a[1] = v[off+1];
-  this.f32a[2] = v[off+2];
-  this.f32a[3] = v[off+3];
-  return this;
-};
-
-Vec4.prototype.store = function(v, off) {
-  v[off+0] = this.f32a[0];
-  v[off+1] = this.f32a[1];
-  v[off+2] = this.f32a[2];
-  v[off+3] = this.f32a[3];
-  return this;
-};
-
-Vec4.prototype.set = function(v) {
-  this.f32a.set(v.f32a);
-  return this;
-};
-
-Vec4.prototype.setF = function(v) {
-  this.f32a[0] = v; 
-  this.f32a[1] = v; 
-  this.f32a[2] = v; 
-  this.f32a[3] = v;
-  return this;
-};
-
-Vec4.prototype.addF = function(v) {
-  this.f32a[0] += v; 
-  this.f32a[1] += v; 
-  this.f32a[2] += v; 
-  this.f32a[3] += v;
-  return this;
-};
-
-Vec4.prototype.subF = function(v) {
-  this.f32a[0] -= v; 
-  this.f32a[1] -= v; 
-  this.f32a[2] -= v; 
-  this.f32a[3] -= v;
-  return this;
-};
-
-Vec4.prototype.mulF = function(v) {
-  this.f32a[0] *= v; 
-  this.f32a[1] *= v; 
-  this.f32a[2] *= v; 
-  this.f32a[3] *= v;
-  return this;
-};
-
-Vec4.prototype.divF = function(v) {
-  this.f32a[0] /= v; 
-  this.f32a[1] /= v; 
-  this.f32a[2] /= v; 
-  this.f32a[3] /= v;
-  return this;
-};
-
-Vec4.prototype.add = function(v) {
-  this.f32a[0] += v.f32a[0]; 
-  this.f32a[1] += v.f32a[1]; 
-  this.f32a[2] += v.f32a[2];
-  this.f32a[3] += v.f32a[3];
-  return this;
-};
-
-Vec4.prototype.sub = function(v) {
-  this.f32a[0] -= v.f32a[0]; 
-  this.f32a[1] -= v.f32a[1]; 
-  this.f32a[2] -= v.f32a[2];
-  this.f32a[3] -= v.f32a[3];
-  return this;
-};
-
-Vec4.prototype.mul = function(v) {
-  this.f32a[0] *= v.f32a[0]; 
-  this.f32a[1] *= v.f32a[1]; 
-  this.f32a[2] *= v.f32a[2];
-  this.f32a[3] *= v.f32a[3];
-  return this;
-};
-
-Vec4.prototype.div = function(v) {
-  this.f32a[0] /= v.f32a[0]; 
-  this.f32a[1] /= v.f32a[1]; 
-  this.f32a[2] /= v.f32a[2];
-  this.f32a[3] /= v.f32a[3];
-  return this;
-};
-
 Bones.applyBones_readable = function(dstVertices, srcVertices, weights, bones) {
   var tmp = new Vec4(), tmp2 = new Vec4(), dv = new Vec4(), sv = new Vec4();
   var i,off,len,woff,totalWeight,k,wlen,wt,boff;
@@ -143,7 +145,7 @@ Bones.applyBones_readable = function(dstVertices, srcVertices, weights, bones) {
         wt = weights[woff+k*2+1];
         totalWeight += wt;
         boff = 0 | weights[woff+k*2]*16;
-        tmp2.add(tmp.load(bones, boff).mulF(sv.f32a[0]));
+        tmp2.set(tmp.load(bones, boff).mulF(sv.f32a[0]));
         tmp2.add(tmp.load(bones, boff+4).mulF(sv.f32a[1]));
         tmp2.add(tmp.load(bones, boff+8).mulF(sv.f32a[2]));
         tmp2.add(tmp.load(bones, boff+12).mulF(sv.f32a[3]));
