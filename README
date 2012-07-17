@@ -1,0 +1,22 @@
+JavaScript Software Skinning
+A vector math benchmark
+---
+Applies 200 4x4 bone matrices to 125000 vec4s.
+Uses Web Workers and Transferables for parallelization.
+
+Also included is a C++ version that uses SSE and OpenMP to give a performance baseline.
+
+
+Timings on a 2.4GHz Core 2 Quad (min/avg/max):
+
+Single-threaded:
+JavaScript 18/18/23 ms
+JavaScript SSE-like 50/51/58 ms
+C++ scalar 7.3 ms
+C++ SSE 3.3 ms
+
+Multi-threaded:
+JavaScript 4.9/8.5/15.8 ms
+JavaScript SSE-like 13/21/33 ms
+C++ scalar 2.1 ms
+C++ SSE 0.9 ms
