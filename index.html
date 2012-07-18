@@ -19,7 +19,6 @@ body {
 <div style="display:inline-block; vertical-align:top;">
   <h3>Performance fiddles</h3>
   <p>Worker count <input id="workercount" type="range" value="4" min="1" max="16" step="1">
-  <p>Times to run benchmark <input id="times" type="range" value="100" min="1" max="500" step="1">
   <p>Mesh size in Mverts <input id="mverts" type="range" value="0.125" min="0.125" max="4" step="0.125">
   <p>Use SSE-like version <input id="sse" type="checkbox">
   <p>Single-threaded <input id="singlethreaded" type="checkbox">
@@ -69,7 +68,16 @@ var b = document.getElementById('b');
 b.disabled = false;
 document.getElementById('r').innerHTML = '';
 
+var c = document.createElement('canvas');
+c.style.display='block';
+c.width = 404;
+c.height = 100;
+var ctx = c.getContext('2d');
+document.body.appendChild(c);
+
+
 var glC = document.createElement('canvas');
+glC.style.display='block';
 glC.width = glC.height = 400;
 document.body.appendChild(glC);
 var gl = glC.getContext('experimental-webgl');
@@ -87,13 +95,20 @@ var positionLocation = gl.getAttribLocation(program, "a_position");
 gl.enableVertexAttribArray(positionLocation);
 gl.vertexAttribPointer(positionLocation, 4, gl.FLOAT, false, 0, 0);
 
+b.stopped = true;
+
 b.onclick = function() {
-  b.disabled = "disabled";
+  this.stopped = !this.stopped;
+  if (this.stopped) {
+    this.innerHTML = 'Run Benchmark';
+    this.disabled = true;
+    return;
+  }
+  this.innerHTML = 'Stop Benchmark';
   var workerCount = parseInt(document.getElementById('workercount').value);
   var mverts = parseFloat(document.getElementById('mverts').value);
   var sse = document.getElementById('sse').checked;
   var st = document.getElementById('singlethreaded').checked;
-  var times = parseInt(document.getElementById('times').value);
   document.getElementById('r').innerHTML = '';
   Bones.useSSE = sse;
   Bones.workerCount = workerCount;
@@ -104,48 +119,74 @@ b.onclick = function() {
     prev_mverts = mverts;
     prev_workerCount = workerCount;
   }
-  var count = times;
-  var arr = [];
+  var frameTimes = [];
+  var bonesTimes = [];
   var prev_t = performance.webkitNow();
   var bm = function(t) {
+    if (b.stopped) return;
+    bonesTimes.push(t);
+  };
+  var tick = function() { Bones.runBenchmark(bm); };
+  var draw = function() {
+    if (b.stopped) {
+      b.disabled = false;
+      return;
+    }
     var now_t = performance.webkitNow();
-//     console.log(now_t - prev_t);
+    frameTimes.push(now_t - prev_t);
     prev_t = now_t;
-    var off = 0;
-    Bones.dstVertices.forEach(function(ab) {
-      gl.bufferSubData(gl.ARRAY_BUFFER, off, ab);
-      off += ab.byteLength;
-    });
+    window.webkitRequestAnimationFrame(draw);
+    if (Bones.dstVertices) {
+      var off = 0;
+      Bones.dstVertices.forEach(function(ab) {
+        gl.bufferSubData(gl.ARRAY_BUFFER, off, ab);
+        off += ab.byteLength;
+      });
+      tick();
+    }
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 0 | (125000/16));
-    arr.push(t);
-    if (count > 0) {
-      count--;
-      window.webkitRequestAnimationFrame(function() { Bones.runBenchmark(bm); });
-    } else {
-      var minT = Math.min.apply(Math, arr);
-      var maxT = Math.max.apply(Math, arr);
-      var avg = arr.reduce(function(s,i){ return s+i; }, 0) / arr.length;
-      document.getElementById('r').innerHTML = (
-        'min: ' + minT + ' ms<br>' +
-        'max: ' + maxT + ' ms<br>' +
-        'avg: ' + avg + ' ms<br>'
-      );
-      var c = document.createElement('canvas');
-      c.width = arr.length * 4;
-      c.height = 100;
-      var ctx = c.getContext('2d');
-      arr.forEach(function(e, i) {
-        var h = e / maxT * 100;
-        ctx.fillRect(i*4, 100-h, 4, h);
-      });
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 100 - (avg/maxT)*100, c.width, 1);
-      document.getElementById('r').appendChild(c);
-      b.disabled = false;
+
+    var minT = Math.min.apply(Math, bonesTimes);
+    var maxT = Math.max.apply(Math, bonesTimes);
+    var fminT = Math.min.apply(Math, frameTimes);
+    var fmaxT = Math.max.apply(Math, frameTimes);
+    var avg = bonesTimes.reduce(function(s,i){ return s+i; }, 0) / bonesTimes.length;
+    var favg = frameTimes.reduce(function(s,i){ return s+i; }, 0) / frameTimes.length;
+    ctx.clearRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#000000';
+    bonesTimes.forEach(function(e, i) {
+      var h = e / 100 * 100;
+      ctx.fillRect(i*2, 100-h, 2, h);
+    });
+    ctx.fillStyle = '#ff0000';
+    frameTimes.forEach(function(e, i) {
+      var h = e / 100 * 100;
+      ctx.fillRect(i*2, 100-h, 2, 1);
+    });
+    ctx.fillStyle = '#cccccc';
+    ctx.fillRect(0, 100 - (avg/100)*100, c.width, 1);
+    ctx.fillStyle = '#eeeeee';
+    ctx.fillRect(0, 100 - (minT/100)*100, c.width, 1);
+    ctx.fillStyle = '#888888';
+    ctx.fillRect(0, 100 - (maxT/100)*100, c.width, 1);
+    ctx.fillStyle = '#ffcccc';
+    ctx.fillRect(0, 100 - (favg/100)*100, c.width, 1);
+    ctx.fillStyle = '#ffeeee';
+    ctx.fillRect(0, 100 - (fminT/100)*100, c.width, 1);
+    ctx.fillStyle = '#ff8888';
+    ctx.fillRect(0, 100 - (fmaxT/100)*100, c.width, 1);
+    if (bonesTimes.length > 199) {
+      bonesTimes.shift();
+      frameTimes.shift();
+    }
+    ctx.fillStyle = '#000000';
+    for (var i=0; i<100; i+=5) {
+      ctx.fillRect(400, 99-i, (i % 10) ? 2 : 4, 1);
     }
   }
-  Bones.runBenchmark(bm);
+  tick();
+  draw();
 };
 </script>
 </body>
