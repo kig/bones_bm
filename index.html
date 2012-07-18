@@ -22,7 +22,7 @@ body {
 <div style="display:inline-block; vertical-align:top;">
   <h3>Performance fiddles</h3>
   <p>Worker count <input id="workercount" type="range" value="4" min="1" max="16" step="1">
-  <p>Mesh size in Mverts <input id="mverts" type="range" value="0.125" min="0.125" max="4" step="0.125">
+  <p>Mesh size in verts <input id="verts" type="range" value="125000" min="25000" max="2000000" step="25000">
   <p>Use SSE-like version <input id="sse" type="checkbox">
   <p>Single-threaded <input id="singlethreaded" type="checkbox">
   <p>Lockstep update & draw <input id="lockstep" type="checkbox">
@@ -67,7 +67,7 @@ for (var i=0; i<rs.length; i++) {
   }, false);
 }
 
-var prev_mverts = 0;
+var prev_verts = 0;
 var prev_workerCount = 0;
 var b = document.getElementById('b');
 b.disabled = false;
@@ -113,14 +113,14 @@ b.onclick = function() {
     this.innerHTML = 'Run Benchmark';
     this.disabled = true;
     document.getElementById('workercount').disabled = 
-    document.getElementById('mverts').disabled = false;
+    document.getElementById('verts').disabled = false;
     return;
   }
   this.innerHTML = 'Stop Benchmark';
   var workerCount = parseInt(document.getElementById('workercount').value);
-  var mverts = parseFloat(document.getElementById('mverts').value);
+  var verts = parseFloat(document.getElementById('verts').value);
   document.getElementById('workercount').disabled = 
-  document.getElementById('mverts').disabled = true;
+  document.getElementById('verts').disabled = true;
   var sse = sse_elem.checked;
   var st = st_elem.checked;
   var lockstep = lockstep_elem.checked;
@@ -128,10 +128,10 @@ b.onclick = function() {
   Bones.singleThreaded = st;
   document.getElementById('r').innerHTML = '';
   Bones.workerCount = workerCount;
-  if (prev_mverts != mverts || prev_workerCount != workerCount) {
-    Bones.initBenchmark(0 | (mverts * 1000000));
-    gl.bufferData(gl.ARRAY_BUFFER, 0 | (mverts*1000000*16), gl.DYNAMIC_DRAW);
-    prev_mverts = mverts;
+  if (prev_verts != verts || prev_workerCount != workerCount) {
+    Bones.initBenchmark(verts);
+    gl.bufferData(gl.ARRAY_BUFFER, verts*16, gl.DYNAMIC_DRAW);
+    prev_verts = verts;
     prev_workerCount = workerCount;
   }
   var frameTimes = [];
@@ -199,8 +199,10 @@ b.onclick = function() {
     ctx.fillRect(0, 100 - (fminT/100)*100, c.width, 1);
     ctx.fillStyle = '#ff8888';
     ctx.fillRect(0, 100 - (fmaxT/100)*100, c.width, 1);
-    if (bonesTimes.length > 199) {
+    while (bonesTimes.length > 199) {
       bonesTimes.shift();
+    }
+    while (frameTimes.length > 199) {
       frameTimes.shift();
     }
     ctx.fillStyle = '#000000';
