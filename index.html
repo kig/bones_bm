@@ -10,6 +10,9 @@ input[type=range]:after {
   display: inline-block;
   padding-top: 4px;
 }
+input[disabled] {
+  opacity: 0.2;
+}
 body {
   font-family: sans-serif;
 }
@@ -22,12 +25,13 @@ body {
   <p>Mesh size in Mverts <input id="mverts" type="range" value="0.125" min="0.125" max="4" step="0.125">
   <p>Use SSE-like version <input id="sse" type="checkbox">
   <p>Single-threaded <input id="singlethreaded" type="checkbox">
+  <p>Lockstep update & draw <input id="lockstep" type="checkbox">
 </div>
 <div style="display:inline-block; vertical-align:top;">
   <h3>Visual fiddles</h3>
-  <p>xFac <input type="range" value="20" min="5" max="320" step="5" onchange="Bones.xFac=1/this.value">
-  <p>yFac <input type="range" value="80" min="5" max="320" step="5" onchange="Bones.yFac=1/this.value">
-  <p>xtFac <input type="range" value="2" min="0" max="8" step="0.5" onchange="Bones.xtFac=this.value-0">
+  <p>xFac <input type="range" value="165" min="5" max="320" step="5" onchange="Bones.xFac=1/this.value">
+  <p>yFac <input type="range" value="165" min="5" max="320" step="5" onchange="Bones.yFac=1/this.value">
+  <p>xtFac <input type="range" value="3" min="0" max="8" step="0.5" onchange="Bones.xtFac=this.value-0">
   <p>ytFac <input type="range" value="4" min="0" max="8" step="0.5" onchange="Bones.ytFac=this.value-0">
 </div>
 <p><button id="b" disabled="disabled">Run Benchmark</button>
@@ -39,10 +43,11 @@ body {
 precision mediump float;
 attribute vec4 a_position;
 varying float z;
+uniform float t;
 
 void main() {
   z = a_position.z;
-  gl_Position = vec4(a_position);
+  gl_Position = vec4(sin(t/300.0)*0.2, cos(t/300.0)*0.2, 0, 0) + a_position;
 }
 </script>
 
@@ -89,6 +94,7 @@ var vertexShader = createShaderFromScriptElement(gl, "2d-vertex-shader");
 var fragmentShader = createShaderFromScriptElement(gl, "2d-fragment-shader");
 var program = createProgram(gl, [vertexShader, fragmentShader]);
 gl.useProgram(program);
+var uniform_t = gl.getUniformLocation(program, 't');
 
 // look up where the vertex data needs to go.
 var positionLocation = gl.getAttribLocation(program, "a_position");
@@ -97,22 +103,31 @@ gl.vertexAttribPointer(positionLocation, 4, gl.FLOAT, false, 0, 0);
 
 b.stopped = true;
 
+var lockstep_elem = document.getElementById('lockstep');
+var st_elem = document.getElementById('singlethreaded');
+var sse_elem = document.getElementById('sse');
+
 b.onclick = function() {
   this.stopped = !this.stopped;
   if (this.stopped) {
     this.innerHTML = 'Run Benchmark';
     this.disabled = true;
+    document.getElementById('workercount').disabled = 
+    document.getElementById('mverts').disabled = false;
     return;
   }
   this.innerHTML = 'Stop Benchmark';
   var workerCount = parseInt(document.getElementById('workercount').value);
   var mverts = parseFloat(document.getElementById('mverts').value);
-  var sse = document.getElementById('sse').checked;
-  var st = document.getElementById('singlethreaded').checked;
-  document.getElementById('r').innerHTML = '';
+  document.getElementById('workercount').disabled = 
+  document.getElementById('mverts').disabled = true;
+  var sse = sse_elem.checked;
+  var st = st_elem.checked;
+  var lockstep = lockstep_elem.checked;
   Bones.useSSE = sse;
-  Bones.workerCount = workerCount;
   Bones.singleThreaded = st;
+  document.getElementById('r').innerHTML = '';
+  Bones.workerCount = workerCount;
   if (prev_mverts != mverts || prev_workerCount != workerCount) {
     Bones.initBenchmark(0 | (mverts * 1000000));
     gl.bufferData(gl.ARRAY_BUFFER, 0 | (mverts*1000000*16), gl.DYNAMIC_DRAW);
@@ -133,9 +148,11 @@ b.onclick = function() {
       return;
     }
     var now_t = performance.webkitNow();
-    frameTimes.push(now_t - prev_t);
-    prev_t = now_t;
-    window.webkitRequestAnimationFrame(draw);
+    var sse = sse_elem.checked;
+    var st = st_elem.checked;
+    var lockstep = lockstep_elem.checked;
+    Bones.useSSE = sse;
+    Bones.singleThreaded = st;
     if (Bones.dstVertices) {
       var off = 0;
       Bones.dstVertices.forEach(function(ab) {
@@ -143,8 +160,14 @@ b.onclick = function() {
         off += ab.byteLength;
       });
       tick();
+    } else if (lockstep) {
+      window.requestAnimFrame(draw);
+      return;
     }
+    frameTimes.push(now_t - prev_t);
+    prev_t = now_t;
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uniform_t, now_t);
     gl.drawArrays(gl.TRIANGLES, 0, 0 | (125000/16));
 
     var minT = Math.min.apply(Math, bonesTimes);
@@ -184,6 +207,7 @@ b.onclick = function() {
     for (var i=0; i<100; i+=5) {
       ctx.fillRect(400, 99-i, (i % 10) ? 2 : 4, 1);
     }
+    window.requestAnimFrame(draw);
   }
   tick();
   draw();

@@ -203,9 +203,9 @@ Bones.useSSE = false;
 Bones.singleThreaded = false;
 
 
-Bones.xFac = 1/80;
-Bones.yFac = 1/20;
-Bones.xtFac = 2;
+Bones.xFac = 1/165;
+Bones.yFac = 1/165;
+Bones.xtFac = 3;
 Bones.ytFac = 4;
 
 Bones.initBenchmark = function(count) {
