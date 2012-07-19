@@ -103,7 +103,8 @@ Bones.applyBones_inlined = function(dstVertices, srcVertices, weights, bones) {
   var x,y,z,w,i,k,woff,off,len,wlen,totalWeight,wt,boff,dx,dy,dz,dw;
   for (i = 0, off = 0, len = srcVertices.length; off < len; i++, off += 4) {
     woff = i*5+1;
-    if (weights[woff-1] == 0) {
+    wlen = weights[woff-1];
+    if (wlen == 0) {
       dstVertices[off] = srcVertices[off];
       dstVertices[off+1] = srcVertices[off+1];
       dstVertices[off+2] = srcVertices[off+2];
@@ -112,7 +113,7 @@ Bones.applyBones_inlined = function(dstVertices, srcVertices, weights, bones) {
       dx=0.0, dy=0.0, dz=0.0, dw=0.0;
       x = srcVertices[off+0], y = srcVertices[off+1], z = srcVertices[off+2], w = srcVertices[off+3];
       totalWeight = 0.0;
-      for (k=0, wlen=weights[woff-1]; k < wlen; k++) {
+      for (k=0; k < wlen; k++) {
         wt = weights[woff+k*2+1];
         totalWeight += wt;
         boff = 0 | weights[woff+k*2]*16;
@@ -176,8 +177,20 @@ self.onmessage = function(ev) {
 // pack weights into a {len, boneIdx, weight, boneIdx, weight} flat array
 Bones.makeWeights = function(count, boneCount) {
   count |= 0;
-  var weights = new Float32Array(count*5);
-  for (var i=0, off=0; i<count; i++, off+=5) {
+  var weights = new Float32Array(count*4);
+  for (var i=0, off=0; i+3<count; i+=3, off+=15) {
+    var len = 0 | (Math.random()+1);
+    weights[off] = weights[off+5] = weights[off+10] = len;
+    for (var j=0; j<len; j++) {
+      weights[off+6+j*2] =
+      weights[off+11+j*2] =
+      weights[off+1+j*2] = 0 | (Math.random()*boneCount);
+      weights[off+7+j*2] =
+      weights[off+12+j*2] =
+      weights[off+2+j*2] = Math.random();
+    }
+  }
+  for (; i<count; i++, off+=5) {
     var len = 0 | (Math.random()+1);
     weights[off] = len;
     for (var j=0; j<len; j++) {
@@ -191,10 +204,19 @@ Bones.makeWeights = function(count, boneCount) {
 Bones.makeBMArray = function(count) {
   count |= 0;
   var arr = new Float32Array(count*4);
+  var dx,dy,dz,tri_sz;
   for (i=0; i<arr.length; i+=4) {
-    arr[i] = 0;
-    arr[i+2] = 0;
-    arr[i+2] = 0;
+    if (i % 12 == 0) {
+      tri_sz = Math.random()*0.05+0.01;
+      var r = Math.random() * 0.1;
+      var a = 2*Math.PI*Math.random();
+      dx = Math.cos(a)*r;
+      dy = Math.sin(a)*r;
+      dz = 0.1 * (0.5-Math.random());
+    }
+    arr[i] = dx + tri_sz * (0.5-Math.random());
+    arr[i+1] = dy + tri_sz * (0.5-Math.random());
+    arr[i+2] = Math.random();
     arr[i+3] = 1;
   }
   return arr;
@@ -223,11 +245,14 @@ Bones.initBenchmark = function(count) {
   var workerCount = this.workerCount;
   var workUnitSize = Math.floor(count/workerCount);
   var unitDiff = count - (workUnitSize*workerCount);
+  var allWeights = this.makeWeights(count, boneCount);
+  var off = 0;
   for (i=0; i<workerCount; i++) {
     if (i == 0) workUnitSize += unitDiff;
     srcVertices.push(this.makeBMArray(workUnitSize).buffer);
     dstVertices.push(this.makeBMArray(workUnitSize).buffer);
-    weights.push(this.makeWeights(workUnitSize, boneCount).buffer);
+    weights.push(allWeights.buffer.slice(off*4*5, workUnitSize*4*5));
+    off += workUnitSize;
     if (i == 0) workUnitSize -= unitDiff;
     var bb = new Float32Array(bbones.length);
     bb.set(bbones);
@@ -244,8 +269,8 @@ Bones.initBenchmark = function(count) {
     var t = Date.now()/1000;
     var xFac = Bones.xFac, yFac = Bones.yFac, xtFac = Bones.xtFac, ytFac = Bones.ytFac;
     for (var i=0; i<bbones.length; i+=16) {
-      var sx = Math.sin(t+i/160)*(0.6+0.4*Math.sin(t+i*xFac+t*xtFac));
-      var sy = Math.cos(t+i/160)*(0.6+0.4*Math.sin(t+i*yFac+t*ytFac));
+      var sx = Math.sin(t+i/160)*(0.5*Math.sin(t+i*xFac+t*xtFac));
+      var sy = Math.cos(t+i/160)*(0.5*Math.sin(t+i*yFac+t*ytFac));
       bbones[i] = 1; bbones[i+1] = 0; bbones[i+2] = 0; bbones[i+3] = 0;
       bbones[i+4] = 0; bbones[i+5] = 1; bbones[i+6] = 0; bbones[i+7] = 0;
       bbones[i+8] = 0; bbones[i+9] = 0; bbones[i+10] = 1; bbones[i+11] = 0;

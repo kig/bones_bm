@@ -26,6 +26,7 @@ body {
   <p>Use SSE-like version <input id="sse" type="checkbox">
   <p>Single-threaded <input id="singlethreaded" type="checkbox">
   <p>Lockstep update & draw <input id="lockstep" type="checkbox">
+  <p>Update vertices with JS <input id="update" type="checkbox" checked>
 </div>
 <div style="display:inline-block; vertical-align:top;">
   <h3>Visual fiddles</h3>
@@ -47,7 +48,7 @@ uniform float t;
 
 void main() {
   z = a_position.z;
-  gl_Position = vec4(sin(t/300.0)*0.2, cos(t/300.0)*0.2, 0, 0) + a_position;
+  gl_Position = vec4(sin(t/300.0)*0.2, cos(t/300.0)*0.2, 0.0, 0.0) + a_position;
 }
 </script>
 
@@ -55,7 +56,7 @@ void main() {
 precision mediump float;
 varying float z;
 void main() {
-  gl_FragColor = vec4(0.4+z*0.6,z*z*0.9,0.3-0.3*z*z,1);
+  gl_FragColor = vec4(0.4+z*0.6,z*z*0.9,0.3-0.3*z*z,1.0);
 }
 </script>
 
@@ -104,6 +105,8 @@ gl.vertexAttribPointer(positionLocation, 4, gl.FLOAT, false, 0, 0);
 b.stopped = true;
 
 var lockstep_elem = document.getElementById('lockstep');
+var update_elem = document.getElementById('update');
+var needUpdate = true;
 var st_elem = document.getElementById('singlethreaded');
 var sse_elem = document.getElementById('sse');
 
@@ -112,14 +115,14 @@ b.onclick = function() {
   if (this.stopped) {
     this.innerHTML = 'Run Benchmark';
     this.disabled = true;
-    document.getElementById('workercount').disabled = 
+    document.getElementById('workercount').disabled =
     document.getElementById('verts').disabled = false;
     return;
   }
   this.innerHTML = 'Stop Benchmark';
   var workerCount = parseInt(document.getElementById('workercount').value);
   var verts = parseFloat(document.getElementById('verts').value);
-  document.getElementById('workercount').disabled = 
+  document.getElementById('workercount').disabled =
   document.getElementById('verts').disabled = true;
   var sse = sse_elem.checked;
   var st = st_elem.checked;
@@ -130,7 +133,7 @@ b.onclick = function() {
   Bones.workerCount = workerCount;
   if (prev_verts != verts || prev_workerCount != workerCount) {
     Bones.initBenchmark(verts);
-    gl.bufferData(gl.ARRAY_BUFFER, verts*16, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, verts*4*4, gl.DYNAMIC_DRAW);
     prev_verts = verts;
     prev_workerCount = workerCount;
   }
@@ -154,12 +157,18 @@ b.onclick = function() {
     Bones.useSSE = sse;
     Bones.singleThreaded = st;
     if (Bones.dstVertices) {
-      var off = 0;
-      Bones.dstVertices.forEach(function(ab) {
-        gl.bufferSubData(gl.ARRAY_BUFFER, off, ab);
-        off += ab.byteLength;
-      });
-      tick();
+      if (needUpdate) {
+        var off = 0;
+        Bones.dstVertices.forEach(function(ab) {
+          gl.bufferSubData(gl.ARRAY_BUFFER, off, ab);
+          off += ab.byteLength;
+        });
+        needUpdate = false;
+      }
+      if (update.checked) {
+        needUpdate = true;
+        tick();
+      }
     } else if (lockstep) {
       window.requestAnimFrame(draw);
       return;
@@ -168,7 +177,7 @@ b.onclick = function() {
     prev_t = now_t;
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
     gl.uniform1f(uniform_t, now_t);
-    gl.drawArrays(gl.TRIANGLES, 0, 0 | (125000/16));
+    gl.drawArrays(gl.TRIANGLES, i, verts);
 
     var minT = Math.min.apply(Math, bonesTimes);
     var maxT = Math.max.apply(Math, bonesTimes);
