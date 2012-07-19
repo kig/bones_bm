@@ -175,6 +175,7 @@ self.onmessage = function(ev) {
 
 // pack weights into a {len, boneIdx, weight, boneIdx, weight} flat array
 Bones.makeWeights = function(count, boneCount) {
+  count |= 0;
   var weights = new Float32Array(count*5);
   for (var i=0, off=0; i<count; i++, off+=5) {
     var len = 0 | (Math.random()+1);
@@ -188,6 +189,7 @@ Bones.makeWeights = function(count, boneCount) {
 };
 
 Bones.makeBMArray = function(count) {
+  count |= 0;
   var arr = new Float32Array(count*4);
   for (i=0; i<arr.length; i+=4) {
     arr[i] = 0;
@@ -219,10 +221,14 @@ Bones.initBenchmark = function(count) {
   var bones = [];
   var workers = [];
   var workerCount = this.workerCount;
+  var workUnitSize = Math.floor(count/workerCount);
+  var unitDiff = count - (workUnitSize*workerCount);
   for (i=0; i<workerCount; i++) {
-    srcVertices.push(this.makeBMArray(count/workerCount).buffer);
-    dstVertices.push(this.makeBMArray(count/workerCount).buffer);
-    weights.push(this.makeWeights(count/workerCount, boneCount).buffer);
+    if (i == 0) workUnitSize += unitDiff;
+    srcVertices.push(this.makeBMArray(workUnitSize).buffer);
+    dstVertices.push(this.makeBMArray(workUnitSize).buffer);
+    weights.push(this.makeWeights(workUnitSize, boneCount).buffer);
+    if (i == 0) workUnitSize -= unitDiff;
     var bb = new Float32Array(bbones.length);
     bb.set(bbones);
     bones.push(bb.buffer);
