@@ -246,12 +246,13 @@ Bones.initBenchmark = function(count) {
   var workUnitSize = Math.floor(count/workerCount);
   var unitDiff = count - (workUnitSize*workerCount);
   var allWeights = this.makeWeights(count, boneCount);
+  var allVerts = this.makeBMArray(count);
   var off = 0;
   for (i=0; i<workerCount; i++) {
     if (i == 0) workUnitSize += unitDiff;
-    srcVertices.push(this.makeBMArray(workUnitSize).buffer);
-    dstVertices.push(this.makeBMArray(workUnitSize).buffer);
-    weights.push(allWeights.buffer.slice(off*4*5, workUnitSize*4*5));
+    srcVertices.push(allVerts.buffer.slice(off*4*4, (off+workUnitSize)*4*4));
+    dstVertices.push(new ArrayBuffer(workUnitSize*4*4));
+    weights.push(allWeights.buffer.slice(off*4*5, (off+workUnitSize)*4*5));
     off += workUnitSize;
     if (i == 0) workUnitSize -= unitDiff;
     var bb = new Float32Array(bbones.length);
