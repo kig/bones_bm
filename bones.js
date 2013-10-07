@@ -1,4 +1,3 @@
-
 Vec4 = function() {
   this.f32a = new Float32Array(4);
 };
@@ -171,7 +170,7 @@ Bones.processWorkerRequest = function(req) {
 self.onmessage = function(ev) {
   var req = ev.data;
   Bones.processWorkerRequest(req);
-  self.webkitPostMessage(req, [req.src, req.dst, req.weights, req.bones]);
+  self.postMessage(req, [req.src, req.dst, req.weights, req.bones]);
 };
 
 // pack weights into a {len, boneIdx, weight, boneIdx, weight} flat array
@@ -233,7 +232,7 @@ Bones.xtFac = 3;
 Bones.ytFac = 4;
 
 Bones.initBenchmark = function(count) {
-  var t_1 = performance.webkitNow();
+  var t_1 = performance.now();
   var boneCount = 200;
   var srcVertices = [];
   var dstVertices = [];
@@ -261,7 +260,7 @@ Bones.initBenchmark = function(count) {
     var w = new Worker('bones.js');
     workers.push(w);
   }
-  var t0 = performance.webkitNow();
+  var t0 = performance.now();
   console.log("init", t0-t_1);
 
   Bones.runBenchmark = function(callback) {
@@ -280,7 +279,7 @@ Bones.initBenchmark = function(count) {
     for (var j=1; j<workerCount; j++) {
       new Float32Array(bones[j]).set(bbones);
     }
-    var t0 = performance.webkitNow();
+    var t0 = performance.now();
     var working = workers.length;
     for (var i=0; i<workers.length; i++) {
       var w = workers[i];
@@ -293,7 +292,7 @@ Bones.initBenchmark = function(count) {
         working--;
         if (working == 0) {
           // all done
-          var t1 = performance.webkitNow();
+          var t1 = performance.now();
           var d = new Float32Array(dstVertices[0]);
           Bones.dstVertices = dstVertices;
           callback(t1-t0);
@@ -311,7 +310,7 @@ Bones.initBenchmark = function(count) {
         Bones.processWorkerRequest(req);
         w.onmessage({data: req});
       } else {
-        w.webkitPostMessage(req, [ srcVertices[i], dstVertices[i], weights[i], bones[i] ]);
+        w.postMessage(req, [ srcVertices[i], dstVertices[i], weights[i], bones[i] ]);
       }
     }
   };
