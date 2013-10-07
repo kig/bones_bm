@@ -140,7 +140,7 @@ b.onclick = function() {
   }
   var frameTimes = [];
   var bonesTimes = [];
-  var prev_t = performance.webkitNow();
+  var prev_t = performance.now();
   var bm = function(t) {
     if (b.stopped) return;
     bonesTimes.push(t);
@@ -151,7 +151,7 @@ b.onclick = function() {
       b.disabled = false;
       return;
     }
-    var now_t = performance.webkitNow();
+    var now_t = performance.now();
     var sse = sse_elem.checked;
     var st = st_elem.checked;
     var lockstep = lockstep_elem.checked;
